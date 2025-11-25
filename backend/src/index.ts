@@ -48,18 +48,19 @@ app.use(
   })
 );
 
+// --- CORRECCIÓN PARA RENDER ---
+// Esta ruta es pública y devuelve 200 OK.
+// Render la usará para verificar que tu servidor está vivo.
 app.get(
   `/`,
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    throw new BadRequestException(
-      "This is a bad request",
-      ErrorCodeEnum.AUTH_INVALID_TOKEN
-    );
     return res.status(HTTPSTATUS.OK).json({
-      message: "Hello Subscribe to the channel & share",
+      message: "El servidor está funcionando correctamente 🚀",
+      status: "success",
     });
   })
 );
+// ------------------------------
 
 app.use(`${BASE_PATH}/auth`, authRoutes);
 app.use(`${BASE_PATH}/user`, isAuthenticated, userRoutes);
