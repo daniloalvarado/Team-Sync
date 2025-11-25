@@ -172,7 +172,7 @@ export default function EditTaskForm({ task, onClose }: { task: TaskType; onClos
 
             {/* Due Date */}
             <FormField control={form.control} name="dueDate" render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-x-3">
                 <FormLabel>Fecha límite</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
