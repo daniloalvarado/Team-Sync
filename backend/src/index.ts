@@ -23,8 +23,13 @@ import taskRoutes from "./routes/task.route";
 const app = express();
 const BASE_PATH = config.BASE_PATH;
 
-app.use(express.json());
+// --- CORRECCIÓN 1: TRUST PROXY (Obligatorio para Render) ---
+// Render usa un balanceador de carga que termina el SSL.
+// Sin esto, Express cree que la conexión es HTTP insegura y bloquea las cookies "secure".
+app.set("trust proxy", 1);
+// -----------------------------------------------------------
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
@@ -32,9 +37,13 @@ app.use(
     name: "session",
     keys: [config.SESSION_SECRET],
     maxAge: 24 * 60 * 60 * 1000,
-    secure: config.NODE_ENV === "production",
+    secure: config.NODE_ENV === "production", // true en producción
     httpOnly: true,
-    sameSite: "lax",
+    // --- CORRECCIÓN 2: SAMESITE (Obligatorio para dominios diferentes) ---
+    // En producción (Render), el frontend y backend tienen dominios distintos.
+    // "none" permite enviar la cookie. "lax" la bloquearía.
+    sameSite: config.NODE_ENV === "production" ? "none" : "lax",
+    // ---------------------------------------------------------------------
   })
 );
 
@@ -44,13 +53,12 @@ app.use(passport.session());
 app.use(
   cors({
     origin: config.FRONTEND_ORIGIN,
-    credentials: true,
+    credentials: true, // Permite recibir cookies del frontend
   })
 );
 
-// --- CORRECCIÓN PARA RENDER ---
-// Esta ruta es pública y devuelve 200 OK.
-// Render la usará para verificar que tu servidor está vivo.
+// --- CORRECCIÓN 3: HEALTH CHECK (Para que Render no marque error) ---
+// Devuelve 200 OK en la raíz para confirmar que el servidor está vivo.
 app.get(
   `/`,
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
@@ -60,7 +68,7 @@ app.get(
     });
   })
 );
-// ------------------------------
+// --------------------------------------------------------------------
 
 app.use(`${BASE_PATH}/auth`, authRoutes);
 app.use(`${BASE_PATH}/user`, isAuthenticated, userRoutes);
